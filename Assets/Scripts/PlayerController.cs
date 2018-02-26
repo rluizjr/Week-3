@@ -1,61 +1,73 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Tilemaps;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
 
-    public float maxSpeed = 10.0f;
+    public float maxSpeed = 10;
+    public float jumpForce = 700f;
+    public float groundRadius = 0.2f;
     public Transform groundCheck;
     public LayerMask defineGround;
-    public float jumpForce = 5;
 
     private Rigidbody2D rBody;
     private SpriteRenderer sRend;
     private Animator animator;
 
-    private float groundCheckRadius = 0.3f;
+    private float moveH;
+    private bool isRight = true;
     private bool isGrounded = false;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
         rBody = GetComponent<Rigidbody2D>();
         sRend = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
-    }
-
-    private void Update()
-    {
-        if (Input.GetAxis("Jump") > 0 && isGrounded)
+	}
+	
+	// Update is called once per frame
+	void Update () {
+		if(isGrounded && Input.GetAxis("Jump") > 0)
         {
             animator.SetBool("Ground", false);
-            rBody.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
-        }
-    }
-
-    // Update is called once per frame
-    void FixedUpdate () {
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, defineGround);
-        //Debug.Log("Grounded?" + isGrounded);
-
-        animator.SetBool("Ground", isGrounded);
-
-        //Pass vertical velocity to animator
-        animator.SetFloat("vSpeed", rBody.velocity.y);
-
-        float moveHoriz = Input.GetAxis("Horizontal");
-
-        //Debug.Log("Horizontal value = " + moveHoriz);
-        animator.SetFloat("Speed", Math.Abs(moveHoriz));
-
-        rBody.velocity = new Vector2(moveHoriz * maxSpeed, rBody.velocity.y);
-
-        if (moveHoriz > 0)
-        {
-            sRend.flipX = false;
-        }else if (moveHoriz < 0)
-        {
-            sRend.flipX = true;
+            rBody.AddForce(new Vector2(0, jumpForce));
+            isGrounded = false;
         }
 	}
+
+    // Do not need to use Time.deltaTime()
+    void FixedUpdate()
+    {
+        // Checks whether character is grounded
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, defineGround);
+        animator.SetBool("Ground", isGrounded);
+
+        // Debug.Log("Grounded? " + isGrounded);
+
+        // Pass vertical velocity to animator
+        animator.SetFloat("vSpeed", rBody.velocity.y);
+
+        if (isGrounded)
+        {
+            // Read input
+            moveH = Input.GetAxis("Horizontal");
+
+            // Set speed variable in animator
+            animator.SetFloat("Speed", Mathf.Abs(moveH));
+
+            // Set character velocity
+            rBody.velocity = new Vector2(moveH * maxSpeed, rBody.velocity.y);
+
+            // Check direction and flip sprite
+            if (moveH > 0)
+            {
+                sRend.flipX = false;
+            }
+            else if (moveH < 0)
+            {
+                sRend.flipX = true;
+            }
+        }
+    }
 }
